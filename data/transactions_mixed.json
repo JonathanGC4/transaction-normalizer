@@ -1,0 +1,55 @@
+[
+    {
+        "id": "2001",
+        "amount": 100,
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "amount": 200,
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "2003",
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "2004",
+        "amount": "abc",
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "2005",
+        "amount": 300,
+        "currency": "YEN",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "2006",
+        "amount": 400,
+        "currency": "USD",
+        "status": "unknown_status",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "2007",
+        "amount": 500,
+        "currency": "USD",
+        "status": "completed",
+        "date": "31-13-2025"
+    },
+    {
+        "id": "2008",
+        "amount": 600,
+        "currency": "USD",
+        "status": "completed"
+    }
+]

@@ -1,0 +1,23 @@
+[
+    {
+        "id": "1001",
+        "amount": 250,
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "transaction": "1002",
+        "value": "350.50",
+        "coin": "US$",
+        "state": "SUCCESS",
+        "created_at": "01/06/2025"
+    },
+    {
+        "reference": "1003",
+        "total": 500,
+        "currency_code": "DOLLAR",
+        "status_code": 1,
+        "timestamp": "2025/06/01"
+    }
+]

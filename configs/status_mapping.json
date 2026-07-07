@@ -1,0 +1,12 @@
+{
+    "completed": "COMPLETED",
+    "success": "COMPLETED",
+    "ok": "COMPLETED",
+    "pending": "PENDING",
+    "waiting": "PENDING",
+    "error": "FAILED",
+    "failed": "FAILED",
+    "1": "COMPLETED",
+    "0": "PENDING",
+    "-1": "FAILED"
+}
