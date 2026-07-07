@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vscode/
+.idea/
+
+# Archivos generados por la opcion de exportar (opcion 8 del menu).
+# Se ignoran porque son resultados regenerables, no codigo fuente.
+output/*.json

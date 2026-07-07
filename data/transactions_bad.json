@@ -1,0 +1,62 @@
+[
+    {
+        "amount": 100,
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "",
+        "amount": 100,
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "3003",
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "3004",
+        "amount": "no-es-numero",
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "3005",
+        "amount": 100,
+        "currency": "YEN",
+        "status": "completed",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "3006",
+        "amount": 100,
+        "currency": "USD",
+        "status": "desconocido",
+        "date": "2025-06-01"
+    },
+    {
+        "id": "3007",
+        "amount": 100,
+        "currency": "USD",
+        "status": "completed",
+        "date": "fecha-invalida"
+    },
+    {
+        "id": "3008",
+        "amount": 100,
+        "currency": "USD",
+        "status": "completed"
+    },
+    {
+        "id": "3009",
+        "amount": -50,
+        "currency": "USD",
+        "status": "completed",
+        "date": "2025-06-01"
+    }
+]

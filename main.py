@@ -12,6 +12,7 @@ from detector import detect_transaction_source, SOURCE_UNKNOWN
 from normalizer import normalize_transaction
 from validator import validate_transaction, VALID_STATUSES, VALID_CURRENCIES
 from metrics import build_metrics
+from exporter import export_transactions, ExportError
 
 
 class AppState:
@@ -84,11 +85,6 @@ def handle_show_invalid(state: AppState) -> None:
 
 
 def handle_filter_by_status(state: AppState) -> None:
-    """
-    Maneja la opcion 5: filtrar las transacciones validas por estado.
-    El filtro se aplica solo sobre transacciones validas, ya que son
-    las unicas que tienen un estado normalizado confiable.
-    """
     if not state.valid_transactions:
         interface.show_message("No hay transacciones validas cargadas.")
         return
@@ -106,7 +102,6 @@ def handle_filter_by_status(state: AppState) -> None:
 
 
 def handle_filter_by_currency(state: AppState) -> None:
-    """Maneja la opcion 6: filtrar las transacciones validas por moneda."""
     if not state.valid_transactions:
         interface.show_message("No hay transacciones validas cargadas.")
         return
@@ -124,7 +119,6 @@ def handle_filter_by_currency(state: AppState) -> None:
 
 
 def handle_show_metrics(state: AppState) -> None:
-    """Maneja la opcion 7: calcular y mostrar las estadisticas generales."""
     total = len(state.valid_transactions) + len(state.invalid_transactions)
     if total == 0:
         interface.show_message("No hay transacciones cargadas. Use la opcion 1 primero.")
@@ -132,6 +126,32 @@ def handle_show_metrics(state: AppState) -> None:
 
     metrics = build_metrics(state.valid_transactions, state.invalid_transactions)
     interface.show_metrics(metrics)
+
+
+def handle_export(state: AppState) -> None:
+    """
+    Maneja la opcion 8: exportar las transacciones normalizadas (solo
+    las validas) a un archivo JSON.
+
+    Decision del desarrollador: solo se exportan transacciones
+    validas, ya que las invalidas no cumplen el modelo normalizado
+    completo (les faltan o tienen mal algun campo).
+    """
+    if not state.valid_transactions:
+        interface.show_message("No hay transacciones validas para exportar.")
+        return
+
+    output_path = interface.ask_export_path()
+
+    try:
+        export_transactions(state.valid_transactions, output_path)
+    except ExportError as error:
+        interface.show_message(f"Error al exportar: {error}")
+        return
+
+    interface.show_message(
+        f"Se exportaron {len(state.valid_transactions)} transacciones a: {output_path}"
+    )
 
 
 def run() -> None:
@@ -155,11 +175,11 @@ def run() -> None:
             handle_filter_by_currency(state)
         elif option == "7":
             handle_show_metrics(state)
+        elif option == "8":
+            handle_export(state)
         elif option == "9":
             interface.show_message("Saliendo del programa. Hasta luego.")
             break
-        elif option == "8":
-            interface.show_not_implemented(option)
         else:
             interface.show_message("Opcion invalida. Intente nuevamente.")
 

@@ -1,0 +1,6 @@
+# Transaction Normalizer no requiere librerias externas.
+# Todo el proyecto usa unicamente la libreria estandar de Python (3.8+):
+#   json, os, datetime, collections
+#
+# Este archivo se deja presente por convencion / buenas practicas,
+# para que quede explicito que no hay dependencias que instalar.
