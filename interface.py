@@ -63,3 +63,39 @@ def show_invalid_transactions(invalid_entries: list) -> None:
         print(f"{index}. Motivo: {entry['error']}")
         print(f"   Datos: {entry['transaction']}")
     print()
+
+def ask_status() -> str:
+    """Solicita al usuario el estado por el cual filtrar."""
+    return input("Ingrese el estado a filtrar (COMPLETED/PENDING/FAILED): ").strip()
+
+
+def ask_currency() -> str:
+    """Solicita al usuario la moneda por la cual filtrar."""
+    return input("Ingrese la moneda a filtrar (USD/EUR/GTQ): ").strip()
+
+
+def show_metrics(metrics: dict) -> None:
+    """
+    Muestra las estadisticas generales calculadas por metrics.py.
+    """
+    print("\n========== ESTADISTICAS ==========")
+    print(f"Total procesadas:  {metrics['total_processed']}")
+    print(f"Total validas:     {metrics['total_valid']}")
+    print(f"Total invalidas:   {metrics['total_invalid']}")
+
+    print("\nPor estado:")
+    for status, count in metrics["by_status"].items():
+        print(f"  {status}: {count}")
+
+    print("\nPor moneda:")
+    for currency, count in metrics["by_currency"].items():
+        print(f"  {currency}: {count}")
+
+    print("\nPor sistema de origen:")
+    for source, count in metrics["by_source"].items():
+        print(f"  {source}: {count}")
+
+    if metrics["duplicated_ids"]:
+        print(f"\nIdentificadores repetidos detectados: {metrics['duplicated_ids']}")
+
+    print("===================================\n")

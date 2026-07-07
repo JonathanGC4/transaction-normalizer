@@ -10,29 +10,19 @@ import interface
 from file_manager import load_transactions_file, FileReadError
 from detector import detect_transaction_source, SOURCE_UNKNOWN
 from normalizer import normalize_transaction
-from validator import validate_transaction
+from validator import validate_transaction, VALID_STATUSES, VALID_CURRENCIES
+from metrics import build_metrics
 
 
 class AppState:
-    """
-    Contiene el estado en memoria de la aplicacion mientras esta corriendo.
-    """
-
     def __init__(self):
-        self.raw_transactions = []        # Transacciones tal como vienen del archivo
-        self.valid_transactions = []      # Transacciones normalizadas y validas
-        self.invalid_transactions = []    # dicts: {"transaction": mapeada, "error": razon}
+        self.raw_transactions = []
+        self.valid_transactions = []
+        self.invalid_transactions = []
         self.source_file = None
 
 
 def handle_load_file(state: AppState) -> None:
-    """
-    Maneja la opcion 1: cargar el archivo, detectar el origen de cada
-    transaccion, mapearla estructuralmente y validarla/convertirla.
-
-    Las transacciones invalidas NO detienen el programa: se guardan
-    aparte junto con la razon por la que fueron rechazadas.
-    """
     file_path = interface.ask_file_path()
 
     try:
@@ -68,7 +58,6 @@ def handle_load_file(state: AppState) -> None:
 
 
 def handle_show_all(state: AppState) -> None:
-    """Maneja la opcion 2: mostrar todas las transacciones (validas + invalidas)."""
     total = len(state.valid_transactions) + len(state.invalid_transactions)
     if total == 0:
         interface.show_message("No hay transacciones cargadas. Use la opcion 1 primero.")
@@ -81,7 +70,6 @@ def handle_show_all(state: AppState) -> None:
 
 
 def handle_show_valid(state: AppState) -> None:
-    """Maneja la opcion 3: mostrar solo las transacciones validas."""
     if not state.valid_transactions:
         interface.show_message("No hay transacciones validas cargadas.")
         return
@@ -89,11 +77,61 @@ def handle_show_valid(state: AppState) -> None:
 
 
 def handle_show_invalid(state: AppState) -> None:
-    """Maneja la opcion 4: mostrar solo las transacciones invalidas."""
     if not state.invalid_transactions:
         interface.show_message("No hay transacciones invalidas cargadas.")
         return
     interface.show_invalid_transactions(state.invalid_transactions)
+
+
+def handle_filter_by_status(state: AppState) -> None:
+    """
+    Maneja la opcion 5: filtrar las transacciones validas por estado.
+    El filtro se aplica solo sobre transacciones validas, ya que son
+    las unicas que tienen un estado normalizado confiable.
+    """
+    if not state.valid_transactions:
+        interface.show_message("No hay transacciones validas cargadas.")
+        return
+
+    status = interface.ask_status().strip().upper()
+    if status not in VALID_STATUSES:
+        interface.show_message(
+            f"Estado no reconocido: '{status}'. "
+            f"Estados validos: {', '.join(sorted(VALID_STATUSES))}"
+        )
+        return
+
+    filtered = [t for t in state.valid_transactions if t["status"] == status]
+    interface.show_transactions(filtered)
+
+
+def handle_filter_by_currency(state: AppState) -> None:
+    """Maneja la opcion 6: filtrar las transacciones validas por moneda."""
+    if not state.valid_transactions:
+        interface.show_message("No hay transacciones validas cargadas.")
+        return
+
+    currency = interface.ask_currency().strip().upper()
+    if currency not in VALID_CURRENCIES:
+        interface.show_message(
+            f"Moneda no reconocida: '{currency}'. "
+            f"Monedas validas: {', '.join(sorted(VALID_CURRENCIES))}"
+        )
+        return
+
+    filtered = [t for t in state.valid_transactions if t["currency"] == currency]
+    interface.show_transactions(filtered)
+
+
+def handle_show_metrics(state: AppState) -> None:
+    """Maneja la opcion 7: calcular y mostrar las estadisticas generales."""
+    total = len(state.valid_transactions) + len(state.invalid_transactions)
+    if total == 0:
+        interface.show_message("No hay transacciones cargadas. Use la opcion 1 primero.")
+        return
+
+    metrics = build_metrics(state.valid_transactions, state.invalid_transactions)
+    interface.show_metrics(metrics)
 
 
 def run() -> None:
@@ -111,10 +149,16 @@ def run() -> None:
             handle_show_valid(state)
         elif option == "4":
             handle_show_invalid(state)
+        elif option == "5":
+            handle_filter_by_status(state)
+        elif option == "6":
+            handle_filter_by_currency(state)
+        elif option == "7":
+            handle_show_metrics(state)
         elif option == "9":
             interface.show_message("Saliendo del programa. Hasta luego.")
             break
-        elif option in {"5", "6", "7", "8"}:
+        elif option == "8":
             interface.show_not_implemented(option)
         else:
             interface.show_message("Opcion invalida. Intente nuevamente.")
