@@ -1,32 +1,43 @@
-# Transaction Normalizer
+# Transaction Normalizer — Sistema Agéntico con Skills
 
-Aplicacion de consola (CLI) en Python que normaliza transacciones
-provenientes de multiples sistemas de origen, cada uno con su propio
-formato de campos, y permite explorarlas mediante un menu interactivo.
+Aplicación de consola (CLI) en Python que normaliza transacciones
+provenientes de múltiples sistemas de origen y permite explorarlas de
+forma interactiva.
 
-Este proyecto es un ejercicio academico cuyo objetivo es demostrar el
-uso de la Inteligencia Artificial como herramienta de apoyo al
-desarrollo (vibecoding), no como reemplazo del criterio del
-desarrollador. Todas las reglas de negocio (modelo de datos, mapeos
-de estado/moneda, criterios de invalidez) fueron decididas por el
-desarrollador; el detalle de cada decision esta documentado en
-`TECHNICAL_NOTE.md`.
+Esta es la **versión refactorizada** del proyecto académico original
+`Transaction Normalizer`. Conserva exactamente la misma funcionalidad
+que la versión original, pero reorganizada bajo una arquitectura de
+**Agente + Skills**, donde `agent.py` coordina el flujo y cada
+responsabilidad de negocio vive en su propia Skill independiente,
+documentada con su propio `SKILL.md`.
+
+Para el detalle completo de qué cambió, por qué, y cómo se usó la IA
+como asistente durante la refactorización, ver `docs/TECHNICAL_NOTE.md`.
 
 ## Requisitos
 
 - Python 3.8 o superior.
-- No requiere librerias externas (ver `requirements.txt`).
+- No requiere librerías externas (ver `requirements.txt`).
 
-## Como ejecutar
+## Cómo ejecutar
 
-Desde la carpeta raiz del proyecto:
+Desde la raíz del proyecto:
 
     python main.py
 
-Se abrira un menu interactivo:
+Al iniciar, el programa pregunta qué Skills opcionales quieres
+habilitar para esa ejecución:
+
+    Configuracion del Agente para esta ejecucion:
+      Habilitar validacion de transacciones (s/n):
+      Habilitar calculo de estadisticas (s/n):
+      Habilitar exportacion a JSON (s/n):
+      Habilitar generacion de resumen (s/n):
+
+Después se abre el menú interactivo:
 
     ==========================================
-    TRANSACTION NORMALIZER
+    TRANSACTION NORMALIZER (Agente + Skills)
     ==========================================
 
     1. Cargar archivo JSON
@@ -37,39 +48,11 @@ Se abrira un menu interactivo:
     6. Filtrar por moneda
     7. Mostrar estadisticas
     8. Exportar datos normalizados
-    9. Salir
+    9. Mostrar resumen
+    10. Salir
 
-Escribe el numero de la opcion deseada y presiona Enter. El programa
-vuelve al menu despues de cada accion, hasta que eliges "9. Salir".
+Si eliges "n" para alguna Skill al iniciar, la opción de menú
+correspondiente sigue apareciendo, pero muestra un mensaje indicando
+que esa Skill está deshabilitada en vez de ejecutarse.
 
-## Archivos de datos de prueba incluidos
-
-- `data/transactions_good.json`: 3 transacciones validas, una de cada
-  sistema de origen (A, B y C).
-- `data/transactions_bad.json`: 9 transacciones, 8 invalidas (una por
-  cada motivo de invalidez posible) y 1 valida con monto negativo.
-- `data/transactions_mixed.json`: mezcla de validas e invalidas para
-  probar el flujo completo.
-
-## Sistemas de origen soportados
-
-| Sistema | Campos crudos |
-|---|---|
-| A | id, amount, currency, status, date |
-| B | transaction, value, coin, state, created_at |
-| C | reference, total, currency_code, status_code, timestamp |
-
-## Modelo normalizado (formato final)
-
-```json
-{
-    "id": "",
-    "amount": 0.0,
-    "currency": "USD",
-    "status": "COMPLETED",
-    "date": "YYYY-MM-DD",
-    "source": ""
-}
-```
-
-## Estructura del proyecto
+## Arquitectura

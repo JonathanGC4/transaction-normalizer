@@ -7,7 +7,7 @@ opcion elegida por el usuario. No contiene logica de negocio.
 
 MENU_TEXT = """
 ==========================================
-TRANSACTION NORMALIZER
+TRANSACTION NORMALIZER (Agente + Skills)
 ==========================================
 
 1. Cargar archivo JSON
@@ -18,7 +18,8 @@ TRANSACTION NORMALIZER
 6. Filtrar por moneda
 7. Mostrar estadisticas
 8. Exportar datos normalizados
-9. Salir
+9. Mostrar resumen
+10. Salir
 """
 
 
@@ -99,3 +100,30 @@ def show_metrics(metrics: dict) -> None:
         print(f"\nIdentificadores repetidos detectados: {metrics['duplicated_ids']}")
 
     print("===================================\n")
+
+
+def ask_yes_no(prompt: str) -> bool:
+    """
+    Solicita una respuesta si/no al usuario.
+    """
+    answer = input(f"{prompt} (s/n): ").strip().lower()
+    return answer in {"s", "si", "sí", "y", "yes"}
+
+
+def ask_agent_configuration() -> dict:
+    """
+    Pregunta al usuario, una vez al iniciar el programa, que Skills
+    opcionales quiere habilitar en esta ejecucion del Agente.
+    """
+    print("\nConfiguracion del Agente para esta ejecucion:")
+    return {
+        "enable_validation": ask_yes_no("  Habilitar validacion de transacciones"),
+        "enable_metrics": ask_yes_no("  Habilitar calculo de estadisticas"),
+        "enable_export": ask_yes_no("  Habilitar exportacion a JSON"),
+        "enable_summary": ask_yes_no("  Habilitar generacion de resumen"),
+    }
+
+
+def show_summary(summary_text: str) -> None:
+    """Muestra el resumen generado por la Skill summary."""
+    print(f"\n{summary_text}\n")

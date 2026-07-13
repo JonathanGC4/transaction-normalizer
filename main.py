@@ -1,91 +1,83 @@
 """
 main.py
 
-Punto de entrada de la aplicacion. Su unica responsabilidad es orquestar
-el ciclo del menu: mostrar opciones, leer la eleccion del usuario, y
-llamar a la funcion correspondiente.
+Punto de entrada de la aplicacion.
+
+A PARTIR DE ESTA ITERACION 4, main.py pregunta al usuario, una sola
+vez al iniciar, que Skills opcionales quiere habilitar para esta
+ejecucion, y crea el TransactionAgent con esa configuracion.
 """
 
 import interface
-from file_manager import load_transactions_file, FileReadError
-from detector import detect_transaction_source, SOURCE_UNKNOWN
-from normalizer import normalize_transaction
-from validator import validate_transaction, VALID_STATUSES, VALID_CURRENCIES
-from metrics import build_metrics
-from exporter import export_transactions, ExportError
+from agent import (
+    TransactionAgent,
+    FileReadError,
+    ExportError,
+    SkillDisabledError,
+    VALID_STATUSES,
+    VALID_CURRENCIES,
+)
 
 
-class AppState:
-    def __init__(self):
-        self.raw_transactions = []
-        self.valid_transactions = []
-        self.invalid_transactions = []
-        self.source_file = None
-
-
-def handle_load_file(state: AppState) -> None:
+def handle_load_file(agent: TransactionAgent) -> None:
+    """Maneja la opcion 1: pedir la ruta y delegar la carga/procesamiento al Agente."""
     file_path = interface.ask_file_path()
 
     try:
-        transactions = load_transactions_file(file_path)
+        agent.load_and_process_file(file_path)
     except FileReadError as error:
         interface.show_message(f"Error al cargar el archivo: {error}")
         return
 
-    state.raw_transactions = transactions
-    state.source_file = file_path
-    state.valid_transactions = []
-    state.invalid_transactions = []
-
-    for raw_transaction in transactions:
-        source = detect_transaction_source(raw_transaction)
-        mapped = normalize_transaction(raw_transaction, source)
-        result = validate_transaction(mapped)
-
-        if result.is_valid:
-            state.valid_transactions.append(result.transaction)
-        else:
-            state.invalid_transactions.append({
-                "transaction": mapped,
-                "error": result.error,
-            })
-
-    interface.show_message(
+    message = (
         f"Archivo cargado correctamente: {file_path}\n"
-        f"Transacciones encontradas: {len(transactions)}\n"
-        f"Validas: {len(state.valid_transactions)}\n"
-        f"Invalidas: {len(state.invalid_transactions)}"
+        f"Transacciones encontradas: {len(agent.raw_transactions)}\n"
     )
+    if agent.enable_validation:
+        message += (
+            f"Validas: {len(agent.valid_transactions)}\n"
+            f"Invalidas: {len(agent.invalid_transactions)}"
+        )
+    else:
+        message += (
+            "Validacion deshabilitada: todas las transacciones mapeadas "
+            f"se guardaron sin validar ({len(agent.valid_transactions)})."
+        )
+    interface.show_message(message)
 
 
-def handle_show_all(state: AppState) -> None:
-    total = len(state.valid_transactions) + len(state.invalid_transactions)
+def handle_show_all(agent: TransactionAgent) -> None:
+    """Maneja la opcion 2: mostrar todas las transacciones (validas + invalidas)."""
+    total = len(agent.valid_transactions) + len(agent.invalid_transactions)
     if total == 0:
         interface.show_message("No hay transacciones cargadas. Use la opcion 1 primero.")
         return
 
     interface.show_message("--- Transacciones validas ---")
-    interface.show_transactions(state.valid_transactions)
+    interface.show_transactions(agent.valid_transactions)
     interface.show_message("--- Transacciones invalidas ---")
-    interface.show_invalid_transactions(state.invalid_transactions)
+    interface.show_invalid_transactions(agent.invalid_transactions)
 
 
-def handle_show_valid(state: AppState) -> None:
-    if not state.valid_transactions:
+def handle_show_valid(agent: TransactionAgent) -> None:
+    """Maneja la opcion 3: mostrar solo las transacciones validas."""
+    if not agent.valid_transactions:
         interface.show_message("No hay transacciones validas cargadas.")
         return
-    interface.show_transactions(state.valid_transactions)
+    interface.show_transactions(agent.valid_transactions)
 
 
-def handle_show_invalid(state: AppState) -> None:
-    if not state.invalid_transactions:
+def handle_show_invalid(agent: TransactionAgent) -> None:
+    """Maneja la opcion 4: mostrar solo las transacciones invalidas."""
+    if not agent.invalid_transactions:
         interface.show_message("No hay transacciones invalidas cargadas.")
         return
-    interface.show_invalid_transactions(state.invalid_transactions)
+    interface.show_invalid_transactions(agent.invalid_transactions)
 
 
-def handle_filter_by_status(state: AppState) -> None:
-    if not state.valid_transactions:
+def handle_filter_by_status(agent: TransactionAgent) -> None:
+    """Maneja la opcion 5: filtrar por estado, delegando el filtro al Agente."""
+    if not agent.valid_transactions:
         interface.show_message("No hay transacciones validas cargadas.")
         return
 
@@ -97,12 +89,13 @@ def handle_filter_by_status(state: AppState) -> None:
         )
         return
 
-    filtered = [t for t in state.valid_transactions if t["status"] == status]
+    filtered = agent.filter_by_status(status)
     interface.show_transactions(filtered)
 
 
-def handle_filter_by_currency(state: AppState) -> None:
-    if not state.valid_transactions:
+def handle_filter_by_currency(agent: TransactionAgent) -> None:
+    """Maneja la opcion 6: filtrar por moneda, delegando el filtro al Agente."""
+    if not agent.valid_transactions:
         interface.show_message("No hay transacciones validas cargadas.")
         return
 
@@ -114,70 +107,91 @@ def handle_filter_by_currency(state: AppState) -> None:
         )
         return
 
-    filtered = [t for t in state.valid_transactions if t["currency"] == currency]
+    filtered = agent.filter_by_currency(currency)
     interface.show_transactions(filtered)
 
 
-def handle_show_metrics(state: AppState) -> None:
-    total = len(state.valid_transactions) + len(state.invalid_transactions)
+def handle_show_metrics(agent: TransactionAgent) -> None:
+    """Maneja la opcion 7: calcular y mostrar estadisticas, si la Skill esta habilitada."""
+    total = len(agent.valid_transactions) + len(agent.invalid_transactions)
     if total == 0:
         interface.show_message("No hay transacciones cargadas. Use la opcion 1 primero.")
         return
 
-    metrics = build_metrics(state.valid_transactions, state.invalid_transactions)
+    try:
+        metrics = agent.calculate_metrics()
+    except SkillDisabledError as error:
+        interface.show_message(str(error))
+        return
+
     interface.show_metrics(metrics)
 
 
-def handle_export(state: AppState) -> None:
-    """
-    Maneja la opcion 8: exportar las transacciones normalizadas (solo
-    las validas) a un archivo JSON.
-
-    Decision del desarrollador: solo se exportan transacciones
-    validas, ya que las invalidas no cumplen el modelo normalizado
-    completo (les faltan o tienen mal algun campo).
-    """
-    if not state.valid_transactions:
+def handle_export(agent: TransactionAgent) -> None:
+    """Maneja la opcion 8: exportar, si la Skill esta habilitada."""
+    if not agent.valid_transactions:
         interface.show_message("No hay transacciones validas para exportar.")
         return
 
     output_path = interface.ask_export_path()
 
     try:
-        export_transactions(state.valid_transactions, output_path)
+        exported_count = agent.export(output_path)
+    except SkillDisabledError as error:
+        interface.show_message(str(error))
+        return
     except ExportError as error:
         interface.show_message(f"Error al exportar: {error}")
         return
 
     interface.show_message(
-        f"Se exportaron {len(state.valid_transactions)} transacciones a: {output_path}"
+        f"Se exportaron {exported_count} transacciones a: {output_path}"
     )
 
 
+def handle_show_summary(agent: TransactionAgent) -> None:
+    """Maneja la opcion 9: generar y mostrar el resumen, si la Skill esta habilitada."""
+    total = len(agent.valid_transactions) + len(agent.invalid_transactions)
+    if total == 0:
+        interface.show_message("No hay transacciones cargadas. Use la opcion 1 primero.")
+        return
+
+    try:
+        summary = agent.generate_summary()
+    except SkillDisabledError as error:
+        interface.show_message(str(error))
+        return
+
+    interface.show_summary(summary)
+
+
 def run() -> None:
-    state = AppState()
+    config = interface.ask_agent_configuration()
+    agent = TransactionAgent(**config)
 
     while True:
         interface.show_menu()
         option = interface.ask_option()
 
         if option == "1":
-            handle_load_file(state)
+            handle_load_file(agent)
         elif option == "2":
-            handle_show_all(state)
+            handle_show_all(agent)
         elif option == "3":
-            handle_show_valid(state)
+            handle_show_valid(agent)
         elif option == "4":
-            handle_show_invalid(state)
+            handle_show_invalid(agent)
         elif option == "5":
-            handle_filter_by_status(state)
+            handle_filter_by_status(agent)
         elif option == "6":
-            handle_filter_by_currency(state)
+            handle_filter_by_currency(agent)
         elif option == "7":
-            handle_show_metrics(state)
+            handle_show_metrics(agent)
         elif option == "8":
-            handle_export(state)
+            handle_export(agent)
         elif option == "9":
+            handle_show_summary(agent)
+        elif option == "10":
             interface.show_message("Saliendo del programa. Hasta luego.")
             break
         else:
